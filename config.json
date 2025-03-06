@@ -1,0 +1,13 @@
+{
+    "input_dir": "./subjects",
+    "registration": false,
+    "output_dir": "./output",
+    "fastsurfer_dir_path": "./surfaces",
+    "model_dir": "./model",
+    "fastsurfer": false,
+    "gradient": false,
+    "device": "cuda",
+    "trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
+    "trained_diffusion_path": "model_checkpoint/diff_unet_ckpt.pt",
+    "trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune_current.pt"
+}

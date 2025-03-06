@@ -1,0 +1,8 @@
+*.pt
+*.txt
+*nii.gz
+/output
+/subject
+/subject_reg
+/surfaces
+*/__pycache__
