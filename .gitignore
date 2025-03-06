@@ -2,7 +2,7 @@
 *.txt
 *nii.gz
 /output
-/subject
+/subjects
 /subject_reg
 /surfaces
 */__pycache__

@@ -126,8 +126,8 @@ def registration(args):
     if os.path.exists('./.tmp') == False:
         os.makedirs('./.tmp')
         
-    t1_regi_transform = Registeration_imaged(keys = 'image',templete='./templete/MNI152_T1_0.8mm_brain.nii.gz')
-    t2_regi_transform = Registeration_imaged(keys = 'image',templete='./templete/MNI152_T2_0.8mm_brain.nii.gz')
+    t1_regi_transform = Registeration_imaged(keys = 'image',templete='./template/MNI152_T1_0.8mm_brain.nii.gz')
+    t2_regi_transform = Registeration_imaged(keys = 'image',templete='./template/MNI152_T2_0.8mm_brain.nii.gz')
     
     with tqdm(files) as pbar:
         for image_info in pbar:
