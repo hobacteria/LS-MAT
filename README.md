@@ -10,6 +10,7 @@
 ## Installation
 
 ## Documents
+https://brain-age-syn-docs.readthedocs.io/en/latest/
 
 ## Dependency
 
