@@ -41,9 +41,16 @@ def process_surface(file_list_path,root_folder,output_folder,parallel_n):
         print(f'total subject is {n}, split by {parallel_n}')
         splited_subjects_array = np.array_split(lines,n//parallel_n + 1)
         for splited_subjects in splited_subjects_array:
+            incomplete = 0
+            
             with open(f'{root_folder}/tmp.txt','w') as t: ## for parallel processing while considering memory
                 for s in splited_subjects:
+                    if not os.listdir(os.path.join(output_folder,s.split('=')[0])) == ['mri','scripts','stats']:
+                        incomplete += 1
                         t.write(s) 
+                if incomplete != 0:
+                    continue
+                   
             command = f'docker run --gpus all -v {root_folder}:/data \
                                 -v {output_folder}:/output \
                                 -v /usr/local/freesurfer:/fs_license \

@@ -99,7 +99,7 @@ def generate_image(args):
                                         unet,
                                         image,
                                         noise_scheduler,
-                                        inference_step=300,
+                                        inference_step=500,
                                         device = args.device)
                 
                 output1 = decode(latent_output1,autoencoder)    
@@ -110,7 +110,7 @@ def generate_image(args):
                                         unet,
                                         output1,
                                         noise_scheduler,
-                                        inference_step=300,
+                                        inference_step=500,
                                         device = args.device)
                 
                 output2 = decode(latent_output2,autoencoder)

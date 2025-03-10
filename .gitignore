@@ -1,6 +1,6 @@
-*.pt
 *.txt
 *nii.gz
+*.pt
 /output
 /subjects
 /subject_reg
