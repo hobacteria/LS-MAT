@@ -39,18 +39,11 @@ def process_surface(file_list_path,root_folder,output_folder,parallel_n):
         lines = f.readlines()
         n = len(lines)
         print(f'total subject is {n}, split by {parallel_n}')
-        splited_subjects_array = np.array_split(lines,n//parallel_n + 1)
+        splited_subjects_array = np.array_split(lines,n//parallel_n + 1)            
         for splited_subjects in splited_subjects_array:
-            incomplete = 0
-            
             with open(f'{root_folder}/tmp.txt','w') as t: ## for parallel processing while considering memory
                 for s in splited_subjects:
-                    if not os.listdir(os.path.join(output_folder,s.split('=')[0])) == ['mri','scripts','stats']:
-                        incomplete += 1
-                        t.write(s) 
-                if incomplete != 0:
-                    continue
-                   
+                        t.write(s)                    
             command = f'docker run --gpus all -v {root_folder}:/data \
                                 -v {output_folder}:/output \
                                 -v /usr/local/freesurfer:/fs_license \
@@ -93,7 +86,7 @@ def fastsurfer(args):
     
     ## Because of the computational cost, we use 2 years interval sample for surface analysis. 
     ## read demographic information and sample 2 years interval subjects
-    """
+    
     subjects = pd.read_csv(f'{args.input_dir}/subjects.txt',header=None)
 
     ages = dict()
@@ -108,7 +101,7 @@ def fastsurfer(args):
             if diff < min_diff:
                 age_sampling[a] = k
                 min_diff = diff
-
+    """
     sample_subject_id = set([subject_path.split('/')[3] for subject_path in age_sampling.values()])
     
     with open(f'{surface_folder}/subjects.txt','w') as f:
@@ -118,8 +111,13 @@ def fastsurfer(args):
                 subject_id = line.split('/')[3]
                 if subject_id in sample_subject_id:
                     f.write(line)
+    ## check breaked subjects
+    with open(f'{surface_folder}/subjects.txt','r') as f:
+        subjects = f.readlines()
+
     """
-            
-    
+                
+                
+    ## process segment and surface    
     process_segment(f'{surface_folder}/subjects.txt',os.path.abspath(args.output_dir),surface_folder,8) ## gpu
-    process_surface(f'{surface_folder}/subjects.txt',os.path.abspath(args.output_dir),surface_folder,80) ## cpu
+    process_surface(f'{surface_folder}/subjects.txt',os.path.abspath(args.output_dir),surface_folder,40) ## cpu

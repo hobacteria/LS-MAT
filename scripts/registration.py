@@ -1,10 +1,12 @@
 import torch
+import monai
 from monai.transforms.transform import MapTransform
+from monai.transforms import Compose
 from scripts.utils import parse_train_files,dataloader
 from tqdm import tqdm
+import nibabel as nib
 import os
-
-
+import numpy as np
 class Registeration_imaged(MapTransform):
 
     def __init__(
@@ -68,13 +70,15 @@ class Inverse_imaged(MapTransform):
         keys,
         device: torch.device = torch.device("cuda:0"),
         allow_missing_keys: bool = False,
+        save_tmpdir = True
         
     ) -> None:
         super().__init__(keys)
         self.device = device 
+        self.save_tmpdir = save_tmpdir
 
 
-    def __call__(self, d,save_tmpdir = True):
+    def __call__(self, d):
         """
         This transform can apply on a subject that already registered to the template image by Registeration_image transform.
         
@@ -83,7 +87,6 @@ class Inverse_imaged(MapTransform):
 
         """
         #image = '/camin2/Database/eNKI/DATA_longitudinal/Surface/V2'
-        image = d["image"]
         save_image = d["image_save"]
         
         subject_id = d["subject_id"]
@@ -93,11 +96,12 @@ class Inverse_imaged(MapTransform):
                 
         command_7 = f'antsApplyTransforms --default-value 0 -e 3 --input {tmpDir}/T1w_all_fast_firstseg.nii.gz -r {tmpDir}/T1w_restore_brain.nii.gz -o {tmpDir}/T1w_all_fast_seg2b0.nii.gz -t [{tmpDir}/_T1w2b0.mat,1] --interpolation NearestNeighbor'
         
-        commands = '> /dev/null \n'.join([command_0,command_7])
+        #commands = '> /dev/null \n'.join([command_0,command_7])
+        commands = '\n'.join([command_0,command_7])
         os.system(commands)
         d["inverse_image"] = f'{tmpDir}/T1w_all_fast_seg2b0.nii.gz'
         
-        if save_tmpdir:
+        if self.save_tmpdir:
             #os.system(f'find {tmpDir} -type f ! -name \"T1w_all_fast_seg2b0.nii.gz\" -delete')
             pass
         else:
@@ -105,7 +109,48 @@ class Inverse_imaged(MapTransform):
         
         return d
     
-    
+class Save_imaged(MapTransform):
+
+    def __init__(
+        self,
+        keys,
+        device: torch.device = torch.device("cuda:0"),
+        allow_missing_keys: bool = False,
+        
+    ) -> None:
+        super().__init__(keys)
+        self.device = device 
+
+
+    def __call__(self, d):
+        image = d['image_save']
+        image_path = d['path_copy']
+        subject_id = d['subject_id']
+        image = image[0].cpu().numpy().astype(np.float32)
+        affine = nib.load(f'./.tmp/{subject_id}/T1w2b0.nii.gz').affine
+        
+        nib.save(nib.Nifti1Image(image, affine), image_path)
+        d['image_save'] = d['path_copy']
+        return d
+
+inverse_transforms = Compose(
+    [   
+        monai.transforms.LoadImaged(keys=["image_save"],allow_missing_keys=False),
+        monai.transforms.EnsureChannelFirstd(keys=["image_save"],allow_missing_keys=True),
+        monai.transforms.Orientationd(keys=["image_save"], axcodes="RAS"),
+        monai.transforms.Resized(keys=["image_save"], spatial_size=(227,272,227), mode="trilinear"),
+        Save_imaged(keys = ['image_save']),
+        Inverse_imaged(keys = ['image_save'],save_tmpdir=True)
+        
+        #monai.transforms.Lambdad(
+        #    keys="sex", func=lambda x: sex_mapping[x['sex']].to(device)),
+        #monai.transforms.Lambdad(
+        #    keys="age", func=lambda x: torch.Tensor([x['age']]).type(torch.float).to(device)),
+    ]
+)
+
+
+
 def registration(args):
     """
     This function is for registration of input images.
@@ -153,13 +198,11 @@ def registration(args):
                 print(f'Unknown modality: {image_path}')
                 pass
 
-    with open(args.input_dir + '/subjects.txt', 'r') as f:
-        lines = f.readlines()
     with open(args.input_dir + '_reg/subjects.txt', 'w') as f:
-        for line in lines:
-            line = line.strip()
-            train_path,modality,sex,age = line.split(',')
-            f.write(f'{train_path}_reg,{modality},sex,age\n')
+        for file in files:
+            train_path,modality,sex,age,synth_age = file['image_path'],file['modality'],file['sex'],file['age'],file['synth_age']
+            train_path_reg = train_path.replace(args.input_dir,input_regi).replace('.nii.gz','_reg.nii.gz')
+            f.write(f'{train_path_reg},{modality},{sex},{age},{synth_age}\n')
     args.input_dir = input_regi
     
-    return None
+    return args

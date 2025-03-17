@@ -1,11 +1,13 @@
 ## make dataloder and encode and to controlnet and save to output images
 from scripts.models import load_vae_gan,load_unet,load_control_net
 from scripts.utils import inference_sample,dataloader,cleanup_DDP_checkpoint,parse_train_files
-from scripts.registration import Inverse_imaged
+from scripts.registration import inverse_transforms
 import nibabel as nib
 import os
 import torch
-from monai.networks.schedulers.pndm import PNDMScheduler
+from monai.networks.schedulers import PNDMScheduler,DDIMScheduler,DDPMScheduler
+from model.DPMsolver import DPMSolverPPScheduler
+
 import numpy as np
 from tqdm import tqdm
 def encode(image,autoencoder):
@@ -22,6 +24,7 @@ def decode(latent,autoencoder):
 def to_controlnet(image,controlnet):
     output = inference_sample(image, controlnet)
     return output
+
 
 def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args):
     T1_save_path = os.path.join(save_path,'T1w.nii.gz')
@@ -41,23 +44,23 @@ def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args):
         nib_t2_image = nib.Nifti1Image(T1_image[i,0].cpu().numpy().astype(np.float32), np.eye(4))
         nib.save(nib_t2_image, T2_age_save_path)
         
-        #if args.registration == 1:
-        #    ## after generate image, we need inverse transform to original MRI space
-        #    ## inverse transform에서 tmp에 나오는 output이 뭔지 확인하고, inverse 할 때마다 원래 input만 남게 만들기.
-        #    ## 연령별로 다 하고 나면 subject id에 해당하는 폴더 삭제하기
-        #    subject_id = save_path.replace(args.output_dir,'') ## 이건 맞는지 확인
-        #    
-        #    invers_transform = Inverse_imaged(keys = 'image')
-        #    
-        #    inverse_image_1 = invers_transform({'image_save':T1_age_save_path,'subject_id':},save_tmpdir=True)['inverse_image']
-        #    os.system(f'mv {inverse_image_1} {T1_age_save_path}')
-        #    inverse_image_2 = invers_transform({'image_save':T2_age_save_path},save_tmpdir=True)['inverse_image']
-        #    os.system(f'mv {inverse_image_2} {T2_age_save_path}')
-        #    os.system(f'rm -r ./.tmp') ## remove tmp folder
+        if args.registration == 1:
+            ## after generate image, we need inverse transform to original MRI space
+            ## inverse transform에서 tmp에 나오는 output이 뭔지 확인하고, inverse 할 때마다 원래 input만 남게 만들기.
+            ## 연령별로 다 하고 나면 subject id에 해당하는 폴더 삭제하기
+            subject_id = save_path.replace(args.output_dir,'').replace('_reg','') ## 이건 맞는지 확인
+            
+            #inverse_transform = Inverse_imaged(keys = 'image')
+            
+            inverse_image_1 = inverse_transforms({'image_save':T1_age_save_path,'subject_id':subject_id,'path_copy':T1_age_save_path})['inverse_image']
+            os.system(f'mv {inverse_image_1} {T1_age_save_path}')
+            inverse_image_2 = inverse_transforms({'image_save':T2_age_save_path,'subject_id':subject_id,'path_copy':T2_age_save_path})['inverse_image']
+            os.system(f'mv {inverse_image_2} {T2_age_save_path}')
+            
 
 
 def generate_image(args):
-    ## load models
+    ## load modelsbe 
     autoencoder = load_vae_gan().to(args.device).eval()
     controlnet = load_control_net().to(args.device).eval()
     unet = load_unet().to(args.device).eval()
@@ -68,7 +71,7 @@ def generate_image(args):
     ## make dataloader
     train_files = parse_train_files(args.input_dir + '/subjects.txt')
     infer_dl = dataloader(train_files,batch_size=1,device='cuda',cache_rate=0.0,num_workers=10)
-    noise_scheduler = PNDMScheduler(num_train_timesteps = 1000)
+    noise_scheduler = DDPMScheduler(num_train_timesteps = 1000)
     with torch.no_grad(),torch.cuda.amp.autocast():
         with tqdm(infer_dl) as pbar:
             for batch in pbar:
@@ -99,7 +102,7 @@ def generate_image(args):
                                         unet,
                                         image,
                                         noise_scheduler,
-                                        inference_step=500,
+                                        inference_step=1000,
                                         device = args.device)
                 
                 output1 = decode(latent_output1,autoencoder)    
@@ -110,7 +113,7 @@ def generate_image(args):
                                         unet,
                                         output1,
                                         noise_scheduler,
-                                        inference_step=500,
+                                        inference_step=1000,
                                         device = args.device)
                 
                 output2 = decode(latent_output2,autoencoder)
