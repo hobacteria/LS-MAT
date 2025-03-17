@@ -125,4 +125,4 @@ for depth in range(n_surfs):
     elif software == "freesurfer":
         subjects_dir=os.environ['SUBJECTS_DIR']
         tmpsurf['volume_info']=gm['volume_info']
-        io.save_mesh_geometry(os.path.join(subjects_dir,'surf',args.output+'{}.pial'.format(str(float(depth)/(n_surfs-1)))),tmpsurf)
+        io.save_mesh_geometry(os.path.join(args.output+'{}.pial'.format(str(float(depth)/(n_surfs-1)))),tmpsurf)

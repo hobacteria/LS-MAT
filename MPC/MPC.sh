@@ -1,5 +1,5 @@
 #!/bin/bash
-root_dir=/camin1/hkkim/control-net/custom
+root_dir=./
 idBIDS=$1 # sub number
 subject_dir=$2 # data dir
 
