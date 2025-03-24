@@ -1,4 +1,4 @@
-# Brain_age_syn
+# LS-MAT
 
 ## Multimodal structural MRI synthesis pipeline across age
 
