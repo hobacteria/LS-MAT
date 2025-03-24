@@ -59,4 +59,4 @@ def  MPC_calc(args):
         os.system(myelin_command)
         os.system(MPC_command)
         
-    excute_MPC_process(T1_path,output_dir,70)
+    excute_MPC_process(T1_path,output_dir,40)

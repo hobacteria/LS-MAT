@@ -5,10 +5,6 @@ from scripts.generate_image import generate_image
 from scripts.registration import registration
 from scripts.fastsurfer import fastsurfer
 from scripts.utils import load_config
-#from scripts.gradient import gradient
-import pandas as pd
-from tqdm import tqdm
-
 """
 with open('./validation_subject.txt','r') as f:
     validation_subjects = f.readlines()
@@ -41,14 +37,11 @@ for path in validation_subjects:
 """
 
 ## get args with argparse
-parser = argparse.ArgumentParser(description="args for inference")
-parser.add_argument("-c", "--config", type=str, default="config.json", help="Path to config JSON file")
-args = parser.parse_args()
-args = load_config(args.config)
+args = load_config("config.json")
 
 if os.path.exists(args.output_dir) == False:
     os.makedirs(args.output_dir)
-if os.path.exists(args.input_dir + '/subjects.txt') == False:
+if os.path.exists(args.input_dir + args.subjects_info) == False:
         print("subjects.txt file does not exist. Please check the input path")
         exit(0)
 ## args.registration = 1
@@ -60,6 +53,3 @@ generate_image(args)
 ## extracte features from generated images (fastsurfer)
 if args.fastsurfer == 1:
     fastsurfer(args)
-## calulate gradient of generated images
-if args.gradient == 1:
-    gradient(args)

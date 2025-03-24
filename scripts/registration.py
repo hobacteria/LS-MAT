@@ -164,7 +164,7 @@ def registration(args):
         print('no registration')
         return args
     
-    files = parse_train_files(file = args.input_dir + '/subjects.txt')
+    files = parse_train_files(file = args.input_dir + args.subjects_info)
     input_regi = args.input_dir + '_reg'
     if os.path.exists(input_regi) == False:
         os.makedirs(input_regi)
@@ -198,7 +198,7 @@ def registration(args):
                 print(f'Unknown modality: {image_path}')
                 pass
 
-    with open(args.input_dir + '_reg/subjects.txt', 'w') as f:
+    with open(args.input_dir + f'_reg/{args.subjects_info}', 'w') as f:
         for file in files:
             train_path,modality,sex,age,synth_age = file['image_path'],file['modality'],file['sex'],file['age'],file['synth_age']
             train_path_reg = train_path.replace(args.input_dir,input_regi).replace('.nii.gz','_reg.nii.gz')

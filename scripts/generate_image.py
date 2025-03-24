@@ -69,7 +69,7 @@ def generate_image(args):
     unet = cleanup_DDP_checkpoint(unet, args.trained_diffusion_path)
     controlnet = cleanup_DDP_checkpoint(controlnet, args.trained_controlnet_path)
     ## make dataloader
-    train_files = parse_train_files(args.input_dir + '/subjects.txt')
+    train_files = parse_train_files(args.input_dir + args.subjects_info)
     infer_dl = dataloader(train_files,batch_size=1,device='cuda',cache_rate=0.0,num_workers=10)
     noise_scheduler = DDPMScheduler(num_train_timesteps = 1000)
     with torch.no_grad(),torch.cuda.amp.autocast():
