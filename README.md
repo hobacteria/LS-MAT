@@ -2,7 +2,7 @@
 
 ## Multimodal structural MRI synthesis pipeline across age
 
-![Image](https://github.com/user-attachments/assets/84a5b02e-b986-4bb4-924c-a996a25655b9)
+![Image](https://github.com/user-attachments/assets/148e2ecc-2d71-4b31-a3a4-78ab5ae98a66)
 
 
 
