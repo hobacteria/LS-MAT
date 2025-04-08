@@ -1,9 +1,10 @@
-import argparse
+import pandas as pd
 import os
 os.chdir('/camin1/hkkim/controlnet-infer')
 from scripts.generate_image import generate_image
 from scripts.registration import registration
 from scripts.fastsurfer import fastsurfer
+from MPC.MPC_calulation import MPC_calc
 from scripts.utils import load_config
 """
 with open('./validation_subject.txt','r') as f:
@@ -33,6 +34,30 @@ for path in validation_subjects:
             age = info['interview_age'].values[0]
             
             f.write(f"{os.path.join(root,file)},{file[:2].lower()},{sex},{age},[10,20,30,40,50,60,70,80]\n")
+            
+
+subjects = pd.read_csv(f'{args.input_dir}/subjects.txt',header=None)
+
+ages = dict()
+for i in range(len(subjects)):
+    subject_id = subjects.iloc[i,0].split('/')[2]
+    ages[subjects.iloc[i,0]] = subjects.iloc[i,3]
+age_sampling = dict()
+for a in range(10,82,2):
+    min_diff= 9999999999
+    for k in ages:
+        diff=abs(a - ages[k])
+        if diff < min_diff:
+            age_sampling[a] = k
+            min_diff = diff
+sample_subject_id = set([subject_path.split('/')[3] for subject_path in age_sampling.values()])
+with open(f'{args.input_dir}/subjects_age.txt','w') as f:
+    with open(f'{args.input_dir}/subjects.txt','r') as t:
+        lines = t.readlines()
+        for line in lines:
+            subject_id = line.split('/')[3]
+            if subject_id in sample_subject_id:
+                f.write(line)
 
 """
 
@@ -53,3 +78,6 @@ generate_image(args)
 ## extracte features from generated images (fastsurfer)
 if args.fastsurfer == 1:
     fastsurfer(args)
+if args.MPC == 1:
+    ## run MPC
+    MPC_calc(args)

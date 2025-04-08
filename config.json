@@ -1,14 +1,19 @@
-{
-    "input_dir": "./subjects",
-    "subjects_info" : "/subjects.txt",
+{   
+    "input_dir": "./subjects", 
+    "subjects_info" : "/subjects_age.txt",
     "registration": false,
-    "output_dir": "./output_exp",
+    "output_dir": "./output",
     "fastsurfer_dir_path": "./surfaces",
     "MPC_dir" : "./output_MPC",
     "model_dir": "./model",
     "fastsurfer": false,
+    "MPC": false,
     "device": "cuda",
     "trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
     "trained_diffusion_path": "model_checkpoint/diff_unet_ckpt.pt",
-    "trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune_current.pt"
+    "trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune_tmp.pt",
+    "inference_step" : 150,
+    "n_threads" : 60,
+    "n_gpu_parallel": 8
+    
 }

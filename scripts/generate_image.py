@@ -6,7 +6,8 @@ import nibabel as nib
 import os
 import torch
 from monai.networks.schedulers import PNDMScheduler,DDIMScheduler,DDPMScheduler
-from model.DPMsolver import DPMSolverPPScheduler
+from model.DPMsolver import DPMSolverMultistepScheduler
+import monai
 
 import numpy as np
 from tqdm import tqdm
@@ -30,8 +31,6 @@ def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args):
     T1_save_path = os.path.join(save_path,'T1w.nii.gz')
     T2_save_path = os.path.join(save_path,'T2w.nii.gz')
     ## clamp image to 0~
-    T1_image = torch.clamp(T1_image,min = 0)
-    T2_image = torch.clamp(T2_image,min = 0)
     
     
     for i,age_syn in enumerate(age_tensor):
@@ -71,7 +70,8 @@ def generate_image(args):
     ## make dataloader
     train_files = parse_train_files(args.input_dir + args.subjects_info)
     infer_dl = dataloader(train_files,batch_size=1,device='cuda',cache_rate=0.0,num_workers=10)
-    noise_scheduler = DDPMScheduler(num_train_timesteps = 1000)
+    noise_scheduler = PNDMScheduler(num_train_timesteps = 1000,steps_offset =1,set_alpha_to_one=True)
+    scale_norm = monai.transforms.ScaleIntensityRangePercentilesd(keys=["image"], lower=0.0, upper=99.5, b_min=0.0, b_max=1, clip=False)
     with torch.no_grad(),torch.cuda.amp.autocast():
         with tqdm(infer_dl) as pbar:
             for batch in pbar:
@@ -90,11 +90,12 @@ def generate_image(args):
                 
                 subject_id = batch['image_path'][0].replace(args.input_dir,'.').replace('.nii.gz','')
                 save_path = os.path.join(args.output_dir,subject_id)
-                if os.path.exists(save_path):                
+                
+                if os.path.exists(save_path) == True:
                     if len(os.listdir(save_path)) == 16:
                         continue
-                    else:
-                        pass
+                    
+                
                 latent_output1 = inference_sample(sex_tensor,
                                         another_modality_tensor, ## modality tensor is about target modality
                                         age_tensor,
@@ -102,22 +103,34 @@ def generate_image(args):
                                         unet,
                                         image,
                                         noise_scheduler,
-                                        inference_step=1000,
-                                        device = args.device)
+                                        inference_step=args.inference_step,
+                                        device = args.device,
+                                        age_control = True)
                 
                 output1 = decode(latent_output1,autoencoder)    
+                ##
+                output1 = torch.clamp(output1,min = 0)
+                output1 = scale_norm({'image':output1})['image']
+
+                
                 latent_output2 = inference_sample(sex_tensor,
                                         modality_tensor,
                                         age_tensor,
                                         controlnet,
-                                        unet,
+                                        unet,                                                           
                                         output1,
-                                        noise_scheduler,
-                                        inference_step=1000,
-                                        device = args.device)
+                                        noise_scheduler,                                                            
+                                        inference_step=args.inference_step,
+                                        device = args.device,                                                                                                       
+                                        age_control = True)
                 
                 output2 = decode(latent_output2,autoencoder)
+                output2 = torch.clamp(output2,min = 0)
+                output2 = scale_norm({'image':output2})['image']
                 ## we trained model to transfer t1 to t2 and t2 to t1 basically
+                ## technically, latent_output2 is about modality transfer only, so we multiply brain mask of latent_output1
+                mask = (output1 > 0).float()
+                output2 = output2 * mask
                 
                 if os.path.exists(save_path) == False:
                     os.makedirs(save_path)

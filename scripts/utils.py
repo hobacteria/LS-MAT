@@ -38,7 +38,7 @@ def initialize_noise_latents(latent_shape, batch_size,device):
         .to(device)
     )
     
-def inference_sample(sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,condition_sample, noise_scheduler,inference_step,device):
+def inference_sample(sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,condition_sample, noise_scheduler,inference_step,device,age_control = False):
     
     noise_scheduler.set_timesteps(inference_step)
     init_noise = initialize_noise_latents([3,64, 64, 64],condition_sample.shape[0], device).float()
@@ -53,13 +53,13 @@ def inference_sample(sex_index_tensor,modality_index_tensor,age_tensor, controln
     for t in noise_scheduler.timesteps:
         
         time_step = torch.tensor([t],dtype = float).to(device).repeat(condition_sample.shape[0])
-        noise_pred = sampler(noisy_latent, condition_sample, time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device)
+        noise_pred = sampler(noisy_latent, condition_sample, time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device,age_control)
         noisy_latent, _ = noise_scheduler.step(noise_pred, t, noisy_latent)
         
     return noisy_latent
 
 
-def unet_process_sample(noisy_latent, conditioning_sample,time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device):
+def unet_process_sample(noisy_latent, conditioning_sample,time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device,age_control = False):
     
     if not (isinstance(controlnet,None) & isinstance(conditioning_sample, None)):
         raise ValueError("controlnet and conditioning_sample should be None")
@@ -76,8 +76,13 @@ def unet_process_sample(noisy_latent, conditioning_sample,time_step,sex_index_te
     return noise_pred_condition
 
 
-def controlnet_process_sample(noisy_latent, conditioning_sample,time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device):
+def controlnet_process_sample(noisy_latent, conditioning_sample,time_step,sex_index_tensor,modality_index_tensor,age_tensor, controlnet, unet,device,age_control = False):
     
+    ## conditionaing scale schedule by time step, non-linearly increase from 0.8 to 1.0
+    ## 0.8 to 1.0
+    if age_control:
+        conditioning_scale = 0.6 + (time_step.mean() / 1000) * 0.4
+    else: conditioning_scale = 1.0
     # create noisy latent
 
     # get controlnet output
@@ -87,6 +92,7 @@ def controlnet_process_sample(noisy_latent, conditioning_sample,time_step,sex_in
         sex_index_tensor=sex_index_tensor, ## no null condition input in controlnet, reduce last one.
         modality_index_tensor=modality_index_tensor,
         age_tensor = age_tensor,
+        conditioning_scale = conditioning_scale
     )
 
     # get noise prediction from diffusion unet
