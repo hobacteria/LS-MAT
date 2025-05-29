@@ -12,7 +12,7 @@
     "trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
     "trained_diffusion_path": "model_checkpoint/diff_unet_ckpt.pt",
     "trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune_tmp.pt",
-    "inference_step" : 150,
+    "inference_step" : 300,
     "n_threads" : 60,
     "n_gpu_parallel": 8
     
