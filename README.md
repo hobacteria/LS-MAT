@@ -12,6 +12,12 @@
 
 ## Installation
 
+You can install this toolbox directly from GitHub by cloning the repository:
+
+```
+git clone <repository-url>
+```
+
 ## Usage
 
 This toolbox accepts brain-extracted files in the nii.gz format as input by default.
