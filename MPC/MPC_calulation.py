@@ -42,21 +42,13 @@ def  MPC_calc(args):
     output_dir = args.output_dir
     
 
-    threads = 40
-    fs_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} fs'
-    myelin_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} myelin'
-    MPC_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} MPC'
-    os.system(fs_command)
-    os.system(myelin_command)
-    os.system(MPC_command)
-
     def excute_MPC_process(T1_path,output_dir,n_treads):
-        threads = n_treads
-        fs_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} fs'
-        myelin_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} myelin'
-        MPC_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {threads} MPC'
+        fs_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} fs'
+        myelin_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} myelin'
+        MPC_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} MPC'
         os.system(fs_command)
         os.system(myelin_command)
         os.system(MPC_command)
         
-    excute_MPC_process(T1_path,output_dir,40)
+    excute_MPC_process(T1_path,output_dir,args.n_threads)
+    

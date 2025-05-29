@@ -207,8 +207,8 @@ class DiffusionModelUNetMRI(nn.Module):
             self.modality_embed_layer = self._create_embedding_module(2 + dropout_space, time_embed_dim)
             new_time_embed_dim += time_embed_dim
         if self.include_age_embed:
-            self.age_embed_layer = self._create_embedding_module(1, time_embed_dim) ## it took cosine/sine embeding.
-            new_time_embed_dim += time_embed_dim
+            self.age_embed_layer = self._create_embedding_module(num_channels[0], time_embed_dim*4) ## it took cosine/sine embeding.
+            new_time_embed_dim += time_embed_dim*4
         #if self.include_spacing_input:
         #    self.spacing_layer = self._create_embedding_module(3, time_embed_dim)
         #    new_time_embed_dim += time_embed_dim
@@ -353,8 +353,8 @@ class DiffusionModelUNetMRI(nn.Module):
             emb = torch.cat((emb, _emb), dim=1)
             
         if self.include_age_embed:
-            #age_embed = get_timestep_embedding(age_index, self.block_out_channels[0]) ## positional encoding for age.
-            _emb = self.age_embed_layer(age_index)
+            age_embed = get_timestep_embedding(age_index.reshape(-1), self.block_out_channels[0]) ## positional encoding for age.
+            _emb = self.age_embed_layer(age_embed)
             emb = torch.cat((emb, _emb), dim=1)
             
         #if self.include_spacing_input:

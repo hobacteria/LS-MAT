@@ -60,18 +60,17 @@ if [ $task == myelin ]; then
 
 		## copy output directory
 		mkdir -p $surface_dir/$sub
-		cp -v $surface_dir/$sub/myelin.nii.gz $surface_dir/$sub/myelin.nii.gz
 	done
 fi
 
 if [ $task == MPC ]; then
-	#if command -v parallel > /dev/null 2>&1; then
-	#	parallel --colsep '=' -j $threads "$root_dir/MPC/MPC.sh" {1} "$surface_dir" ::: $sub_list
-	#else
+	if command -v parallel > /dev/null 2>&1; then
+		parallel --colsep '=' -j $threads $root_dir/MPC/MPC.sh {1} $surface_dir ::: $sub_list
+	else
 	for sub_line in $sub_list
 	do		
 			IFS='=' read -r sub t2_path <<< "$sub_line"
 			source $root_dir/MPC/MPC.sh $sub $surface_dir
 	done
-	#fi
+	fi
 fi

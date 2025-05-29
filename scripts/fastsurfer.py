@@ -10,17 +10,17 @@ import numpy as np
 
 
 def _check_complete_subject(subject_folder):
-    if not os.path.exists(os.path.join(subject_folder,'/label')):
+    if not os.path.exists(os.path.join(subject_folder,'label')):
         n = []
     
     else: 
-        n = os.listdir(os.path.join(subject_folder,'/label'))
+        n = os.listdir(os.path.join(subject_folder,'label'))
     
     if len(n) != 91:
         return False
     else: 
         return True
-    
+ 
 def run_segment_batch(subject_lines, root_folder, output_folder, index):
     for k, subject_line in enumerate(subject_lines):
         tmp_list_path = f'{root_folder}/tmp_segment_{index}_{k}.txt'
@@ -47,7 +47,6 @@ def run_surface_batch(subject_lines, root_folder, output_folder, index):
         tmp_list_path = f'{root_folder}/tmp_surface_{index}_{k}.txt'
         with open(tmp_list_path, 'w') as f:
             f.write(subject_line)
-
         command = f'docker run --gpus all -v {root_folder}:/data \
                                 -v {output_folder}:/output \
                                 -v /usr/local/freesurfer:/fs_license \
@@ -100,7 +99,6 @@ def fastsurfer(args):
     """
     
     ## we only need t1 image for fastsurfer
-    
     with open(f'{surface_folder}/subjects.txt','w') as f: ## subjects.txt is for fastsurfer
         for root, dirs, files in os.walk(args.output_dir):
                 for file in files:
@@ -111,16 +109,22 @@ def fastsurfer(args):
                         
                         subject_id = os.path.join(os.path.dirname(full_path.replace(args.output_dir,'')),file.replace('.nii.gz',''))
                         subject_id =subject_id.replace('/','_')
-                        if not _check_complete_subject(os.path.join(surface_folder,subject_id)):
-                            os.system(f'rm -rf {os.path.join(args.fastsurfer_dir_path,subject_id)}')
-                            ## fastsurfer format
-                            f.write(f'{subject_id}={fastsurfer_path}\n')
+                        #    ## fastsurfer format
+                        #if not _check_complete_subject(os.path.join(surface_folder,subject_id)):
+                        #        os.system(f'rm -rf {os.path.join(args.fastsurfer_dir_path,subject_id)}')
+                        f.write(f'{subject_id}={fastsurfer_path}\n')
     
     ## Because of the computational cost, we use 2 years interval sample for surface analysis. 
     ## read demographic information and sample 2 years interval subjects
                 
-                
+
     ## process segment and surface    
     process_segment(f'{surface_folder}/subjects.txt',os.path.abspath(args.output_dir),surface_folder,args.n_gpu_parallel) ## gpu
     process_surface(f'{surface_folder}/subjects.txt',os.path.abspath(args.output_dir),surface_folder,args.n_threads) ## cpu
-    
+
+
+if __name__ == '__main__':
+    os.chdir('/camin1/hkkim/controlnet-infer')
+    from utils import load_config
+    args = load_config("config.json")    
+    fastsurfer(args)

@@ -18,7 +18,7 @@ from torch import nn
 
 from model.control_net import ControlNet
 from monai.networks.nets.diffusion_model_unet import get_timestep_embedding
-
+from monai.apps.generation.maisi.networks.autoencoderkl_maisi import AutoencoderKlMaisi
 
 class ControlNetMRI(ControlNet):
     """
@@ -79,7 +79,7 @@ class ControlNetMRI(ControlNet):
     ) -> None:
         # time
         time_embed_dim = num_channels[0] * 4
-        self.new_time_embed_dim = time_embed_dim * (1+include_sub_cat_embed + include_sex_embed+ include_modality_embed+include_age_embed)
+        self.new_time_embed_dim = time_embed_dim * (1+include_sub_cat_embed + include_sex_embed+ include_modality_embed+include_age_embed*4)
         super().__init__(
             spatial_dims,
             in_channels,
@@ -127,8 +127,8 @@ class ControlNetMRI(ControlNet):
             self.modality_embed_layer = self._create_embedding_module(2, time_embed_dim)
             new_time_embed_dim += time_embed_dim
         if self.include_age_embed:
-            self.age_embed_layer = self._create_embedding_module(1, time_embed_dim) ## it took cosine/sine embeding.
-            new_time_embed_dim += time_embed_dim
+            self.age_embed_layer = self._create_embedding_module(num_channels[0], time_embed_dim *4) ## it took cosine/sine embeding.
+            new_time_embed_dim += time_embed_dim *4
             
     def _create_embedding_module(self, input_dim, embed_dim):
         model = nn.Sequential(nn.Linear(input_dim, embed_dim), nn.SiLU(), nn.Linear(embed_dim, embed_dim))
@@ -148,8 +148,8 @@ class ControlNetMRI(ControlNet):
             emb = torch.cat((emb, _emb), dim=1)
             
         if self.include_age_embed:
-            #age_embed = get_timestep_embedding(age_index, self.block_out_channels[0]) ## positional encoding for age.
-            _emb = self.age_embed_layer(age_index)
+            age_embed = get_timestep_embedding(age_index.reshape(-1), self.block_out_channels[0]) ## positional encoding for age.
+            _emb = self.age_embed_layer(age_embed)
             emb = torch.cat((emb, _emb), dim=1)
         return emb
 

@@ -6,7 +6,6 @@ import nibabel as nib
 import os
 import torch
 from monai.networks.schedulers import PNDMScheduler,DDIMScheduler,DDPMScheduler
-from model.DPMsolver import DPMSolverMultistepScheduler
 import monai
 
 import numpy as np
@@ -17,9 +16,10 @@ def encode(image,autoencoder):
 
 def decode(latent,autoencoder):
     ## because of vram issue, we decode image separately by batch
-    image = torch.zeros((latent.shape[0],1,256,256,256)).to(latent.device)
-    for i in range(latent.shape[0]):
-        image[i] = autoencoder.decode_stage_2_outputs(latent[i].unsqueeze(0))
+    with torch.no_grad(), torch.amp.autocast("cuda"):
+        image = torch.zeros((latent.shape[0],1,256,256,256)).to(latent.device)    
+        for i in range(latent.shape[0]):
+            image[i] = autoencoder.decode_stage_2_outputs(latent[i].unsqueeze(0))
     return image
 
 def to_controlnet(image,controlnet):
@@ -70,22 +70,25 @@ def generate_image(args):
     ## make dataloader
     train_files = parse_train_files(args.input_dir + args.subjects_info)
     infer_dl = dataloader(train_files,batch_size=1,device='cuda',cache_rate=0.0,num_workers=10)
-    noise_scheduler = PNDMScheduler(num_train_timesteps = 1000,steps_offset =1,set_alpha_to_one=True)
+    noise_scheduler = PNDMScheduler(num_train_timesteps = 1000)
     scale_norm = monai.transforms.ScaleIntensityRangePercentilesd(keys=["image"], lower=0.0, upper=99.5, b_min=0.0, b_max=1, clip=False)
-    with torch.no_grad(),torch.cuda.amp.autocast():
+    with torch.no_grad():
         with tqdm(infer_dl) as pbar:
             for batch in pbar:
                 
                 pbar.set_description(f"Processing {batch['image_path'][0]}")
                 
                 batch['synth_age']= batch['synth_age'].transpose(1,0).to(args.device)
+                original_age = batch['age'].to(args.device)
                 synth_size = batch['synth_age'].shape[0]
+                
                 
                 ## make synth_size as batch size, and we generate each age of synth_age
                 image = batch['image'].to(args.device).repeat(synth_size,1,1,1,1)
                 sex_tensor = batch['sex'].to(args.device).repeat(synth_size,1)
                 modality_tensor = batch['modality'].to(args.device).repeat(synth_size,1)
                 another_modality_tensor = 1- modality_tensor
+                
                 age_tensor = torch.tensor(batch['synth_age']).to(args.device) / 100
                 
                 subject_id = batch['image_path'][0].replace(args.input_dir,'.').replace('.nii.gz','')
@@ -95,6 +98,11 @@ def generate_image(args):
                     if len(os.listdir(save_path)) == 16:
                         continue
                     
+                if len(age_tensor) == 1:
+                    if original_age.item() == age_tensor.item():
+                        age_control = False
+                    else:
+                        age_control = True
                 
                 latent_output1 = inference_sample(sex_tensor,
                                         another_modality_tensor, ## modality tensor is about target modality
@@ -105,13 +113,14 @@ def generate_image(args):
                                         noise_scheduler,
                                         inference_step=args.inference_step,
                                         device = args.device,
-                                        age_control = True)
+                                        age_control = age_control)
                 
                 output1 = decode(latent_output1,autoencoder)    
                 ##
                 output1 = torch.clamp(output1,min = 0)
                 output1 = scale_norm({'image':output1})['image']
 
+                
                 
                 latent_output2 = inference_sample(sex_tensor,
                                         modality_tensor,
@@ -122,7 +131,7 @@ def generate_image(args):
                                         noise_scheduler,                                                            
                                         inference_step=args.inference_step,
                                         device = args.device,                                                                                                       
-                                        age_control = True)
+                                        age_control = False)
                 
                 output2 = decode(latent_output2,autoencoder)
                 output2 = torch.clamp(output2,min = 0)
