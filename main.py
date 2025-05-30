@@ -1,75 +1,18 @@
 import pandas as pd
 import os
-os.chdir('/camin1/hkkim/controlnet-infer')
 from scripts.generate_image import generate_image
 from scripts.registration import registration
 from scripts.fastsurfer import fastsurfer
 from MPC.MPC_calulation import MPC_calc
 from scripts.utils import load_config
-"""
-with open('./validation_subject.txt','r') as f:
-    validation_subjects = f.readlines()
-    validation_subjects = [x.split(',')[0] for x in validation_subjects]
 
-validation_subjects = [s.replace('/camin1/hkkim/control-net/embeddings','./subjects').replace('\n','').replace('_emb','') for s in validation_subjects]
-subject_info = pd.read_csv('./subjects/all_subject.csv')
-for path in validation_subjects:
-    root = os.path.dirname(path)
-    file = os.path.basename(path)
-    
-    if 'nii.gz' in file:
-        if not os.path.exists(path):
-            print(f"{path} does not exist. Please check the input path")
-            break
-        subject = root.split('/')[-1].split('_')[0]
-        src_data = root.split('/')[-2]
-        
-        info = subject_info[subject_info['src_subject_id'].str.contains(subject)]
-        if len(info) == 0:
-            print(f'no info for {subject}')
-        elif len(info) > 1:
-            info = info[info['sub_div'] == src_data]
-        with open('./subjects/subjects.txt','a') as f:
-            sex = info['sex'].values[0].lower()
-            age = info['interview_age'].values[0]
-            
-            f.write(f"{os.path.join(root,file)},{file[:2].lower()},{sex},{age},[10,20,30,40,50,60,70,80]\n")
-            
-
-subjects = pd.read_csv(f'{args.input_dir}/subjects.txt',header=None)
-
-ages = dict()
-for i in range(len(subjects)):
-    subject_id = subjects.iloc[i,0].split('/')[2]
-    ages[subjects.iloc[i,0]] = subjects.iloc[i,3]
-age_sampling = dict()
-for a in range(10,82,2):
-    min_diff= 9999999999
-    for k in ages:
-        diff=abs(a - ages[k])
-        if diff < min_diff:
-            age_sampling[a] = k
-            min_diff = diff
-sample_subject_id = set([subject_path.split('/')[3] for subject_path in age_sampling.values()])
-with open(f'{args.input_dir}/subjects_age.txt','w') as f:
-    with open(f'{args.input_dir}/subjects.txt','r') as t:
-        lines = t.readlines()
-        for line in lines:
-            subject_id = line.split('/')[3]
-            if subject_id in sample_subject_id:
-                f.write(line)
-
-"""
 
 ## get args with argparse
 args = load_config("config.json")
 
 if os.path.exists(args.output_dir) == False:
     os.makedirs(args.output_dir)
-if os.path.exists(args.input_dir + args.subjects_info) == False:
-        print("subjects.txt file does not exist. Please check the input path")
-        exit(0)
-## args.registration = 1
+
 ## check registration option and do registration if needed
 args = registration(args)
 ## get path and pass to vaegan, save latent space
