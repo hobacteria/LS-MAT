@@ -54,7 +54,24 @@ For additional analyses, such as surface analysis and MPC analysis, update the c
 
 
 ## Documents
+
 https://brain-age-syn-docs.readthedocs.io/en/latest/
 
 ## Dependency
+The following packages are essential for running the toolbox. If execution fails despite meeting these conditions, please refer to the full requirements.txt to strictly align your environment:
+
+```
+brainspace==0.1.16
+brainstat==0.4.2
+freesurfer-surface==2.0.0
+monai @ git+https://github.com/Project-MONAI/MONAI@cac21f6936a2e8d6e4e57e4e958f8e32aae1585e
+numpy==1.26.4
+pandas==2.2.3
+scikit-learn==1.5.2
+scipy==1.12.0
+torch==2.4.1
+torchsummary==1.5.1
+torchvision==0.19.1
+tornado==6.4.1
+```
 
