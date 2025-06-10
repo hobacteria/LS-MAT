@@ -48,11 +48,26 @@ The fields are separated by commas and represent:
 * `{Original age}` (in years)
 * `{List of desired ages for generation}` (e.g., `[10,30,70]`)
 
+Example of data structure and subjects.txt file.
+
+![Image](https://github.com/user-attachments/assets/28741406-72e1-4075-978d-7ecd712cf24f)
+
+You are free to organize the folder structure as you wish.
+However, under the specified subject folder, there must be a subjects.txt file.
+This file must explicitly list the absolute paths of the MRI images in .nii.gz format.
+
+
 Once your data is prepared, run the toolbox by executing:
 
 ```
 python main.py
 ```
+
+The generated images are saved to the output path specified in the config.json file.
+By default, they maintain the same subfolder structure as the input subject folder.
+
+![Image](https://github.com/user-attachments/assets/f11e9ef3-31d9-4c58-8e5c-1920a7a2f56c)
+
 
 For additional analyses, such as surface analysis and MPC analysis, update the corresponding parameters in the configuration file (`config.json`) and ensure your environment meets the necessary requirements.
 
