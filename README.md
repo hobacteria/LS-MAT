@@ -66,10 +66,12 @@ python main.py
 The generated images are saved to the output path specified in the config.json file.
 By default, they maintain the same subfolder structure as the input subject folder.
 
-![Image](https://github.com/user-attachments/assets/f11e9ef3-31d9-4c58-8e5c-1920a7a2f56c)
-
+<img src="https://github.com/user-attachments/assets/f11e9ef3-31d9-4c58-8e5c-1920a7a2f56c" width="320" />
 
 For additional analyses, such as surface analysis and MPC analysis, update the corresponding parameters in the configuration file (`config.json`) and ensure your environment meets the necessary requirements.
+
+ * "fastsurfer": false, (Default is false, because FastSurfer may be affected by your Python,OS environment.)
+ * "MPC": false, (Since MPC analysis is performed using surfaces obtained from FastSurfer analysis, Default is also set to false.)
 
 
 ## Documents
