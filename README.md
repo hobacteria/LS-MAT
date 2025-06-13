@@ -18,6 +18,17 @@ You can install this toolbox directly from GitHub by cloning the repository:
 git clone https://github.com/hobacteria/LS-MAT.git
 ```
 
+You can download the model checkpoints from the link below.
+By default, place them in the "model_checkpoint folder".
+Alternatively, you can modify the paths in config.json:
+
+```
+"trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
+"trained_diffusion_path": "model_checkpoint/diff_unet_ckpt_posemb.pt",
+"trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune_v3.pt"
+```
+Let me know if you'd like a more formal or technical version.
+
 ## Usage
 
 **[Prepare data]**
