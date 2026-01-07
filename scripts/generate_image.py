@@ -27,7 +27,7 @@ def to_controlnet(image,controlnet):
     return output
 
 
-def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args):
+def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args,original_spatial_size=None):
     T1_save_path = os.path.join(save_path,'T1w.nii.gz')
     T2_save_path = os.path.join(save_path,'T2w.nii.gz')
     ## clamp image to 0~
@@ -36,11 +36,34 @@ def save_by_synthesis_age(T1_image,T2_image,save_path,age_tensor,args):
     for i,age_syn in enumerate(age_tensor):
         T1_age_save_path = T1_save_path.replace('.nii.gz',f'_age_{age_syn.item()}.nii.gz')
         T2_age_save_path = T2_save_path.replace('.nii.gz',f'_age_{age_syn.item()}.nii.gz')
+        
+        # registration이 꺼져 있을 때만 원본 크기로 리사이즈
+        if args.registration != 1 and original_spatial_size is not None:
+            resize_to_original = monai.transforms.Resized(
+                keys=["image"],
+                spatial_size=original_spatial_size,
+                mode="trilinear"
+            )
+            
+            # T1 이미지 리사이즈 - [C, H, W, D] 형태로 변환
+            t1_img = T2_image[i,0:1].cpu()  # [1, 256, 256, 256] 형태
+            t1_img = resize_to_original({'image': t1_img})['image']
+            t1_img_np = t1_img[0].numpy().astype(np.float32)  # channel dimension 제거
+            
+            # T2 이미지 리사이즈 - [C, H, W, D] 형태로 변환
+            t2_img = T1_image[i,0:1].cpu()  # [1, 256, 256, 256] 형태
+            t2_img = resize_to_original({'image': t2_img})['image']
+            t2_img_np = t2_img[0].numpy().astype(np.float32)  # channel dimension 제거
+        else:
+            # registration이 켜져 있거나 원본 크기 정보가 없으면 기존대로
+            t1_img_np = T2_image[i,0].cpu().numpy().astype(np.float32)
+            t2_img_np = T1_image[i,0].cpu().numpy().astype(np.float32)
+        
         ## save t1w image
-        nib_t1_image = nib.Nifti1Image(T2_image[i,0].cpu().numpy().astype(np.float32), np.eye(4))
+        nib_t1_image = nib.Nifti1Image(t1_img_np, np.eye(4))
         nib.save(nib_t1_image, T1_age_save_path)
         ## save t2w image
-        nib_t2_image = nib.Nifti1Image(T1_image[i,0].cpu().numpy().astype(np.float32), np.eye(4))
+        nib_t2_image = nib.Nifti1Image(t2_img_np, np.eye(4))
         nib.save(nib_t2_image, T2_age_save_path)
         
         if args.registration == 1:
@@ -77,6 +100,13 @@ def generate_image(args):
             for batch in pbar:
                 
                 pbar.set_description(f"Processing {batch['image_path'][0]}")
+                
+                # registration이 꺼져 있을 때만 원본 이미지 크기 가져오기
+                original_spatial_size = None
+                if args.registration != 1:
+                    original_image_path = batch['image_path'][0]
+                    original_nib = nib.load(original_image_path)
+                    original_spatial_size = original_nib.shape[:3]  # (H, W, D)
                 
                 batch['synth_age']= batch['synth_age'].transpose(1,0).to(args.device)
                 original_age = batch['age'].to(args.device)
@@ -144,9 +174,9 @@ def generate_image(args):
                 if os.path.exists(save_path) == False:
                     os.makedirs(save_path)
                 if batch['modality_str'][0] == 't1': 
-                    save_by_synthesis_age(output1,output2,save_path,batch['synth_age'],args)
+                    save_by_synthesis_age(output1,output2,save_path,batch['synth_age'],args,original_spatial_size)
                 elif batch['modality_str'][0] == 't2':
-                    save_by_synthesis_age(output2,output1,save_path,batch['synth_age'],args)
+                    save_by_synthesis_age(output2,output1,save_path,batch['synth_age'],args,original_spatial_size)
 
         return args
     
