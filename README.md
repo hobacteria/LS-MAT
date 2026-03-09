@@ -1,109 +1,171 @@
+
 # LS-MAT
+**Lifespan structural MRI Synthesis for Microstructural covariance profile Analysis Toolbox**
 
-## Lifespan structural MRI Synthesis for Microstructural covariance profile Analysis Toolbox
+[![Docs](https://img.shields.io/badge/docs-latest-blue.svg)](https://brain-age-syn-docs.readthedocs.io/en/latest/)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+</div>
 
-![Image](https://github.com/user-attachments/assets/673b9a29-53c8-40f5-b63e-122c74db7207)
+<br/>
 
+![Teaser](https://github.com/user-attachments/assets/673b9a29-53c8-40f5-b63e-122c74db7207)
 
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/41ebacab-60f2-4b02-92f7-5b4c818ebabd" width="49%">
+  <img src="https://github.com/user-attachments/assets/e6772f6e-a776-4a3f-afff-d4f079fef383" width="49%">
+</div>
 
-![Image](https://github.com/user-attachments/assets/41ebacab-60f2-4b02-92f7-5b4c818ebabd)
-![Image](https://github.com/user-attachments/assets/e6772f6e-a776-4a3f-afff-d4f079fef383)
+<br/>
 
+## 📖 Table of Contents
+- [Installation](#-installation)
+- [Model Checkpoints](#-model-checkpoints)
+- [Data Preparation](#-data-preparation)
+- [Usage](#-usage)
+- [Advanced Analysis](#-advanced-analysis)
+- [Documentation](#-documentation)
+- [Citation](#-citation)
 
-## Installation
+---
 
-You can install this toolbox directly from GitHub by cloning the repository:
+## 🛠 Installation
 
-```
-git clone https://github.com/hobacteria/LS-MAT.git
-```
+We recommend setting up a virtual environment (e.g., Conda) before installing the dependencies.
 
-You can download the model checkpoints from the link below.
-https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0
-By default, place them in the "model_checkpoint folder".
-Alternatively, you can modify the paths in config.json:
-
-```
-"trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
-"trained_diffusion_path": "model_checkpoint/diff_unet_ckpt.pt",
-"trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune.pt"
-```
-
-## Usage
-
-**[Prepare data]**
-
-Prepare the bias field-corrected and skull-stripped NIFTI file.
-
-It is recommended to use MNI template-aligned brain images; however, if your image is in native space, edit the configuration parameter in `config.json` by setting:
-
-```
-registration=true
-```
-
-**[Set parameters]**
-
-Create a file named `subjects.txt` in the folder containing the MRI data.
-
-Each entry in `subjects.txt` should follow this format:
+**1. Clone the repository:**
+```bash
+git clone [https://github.com/hobacteria/LS-MAT.git](https://github.com/hobacteria/LS-MAT.git)
+cd LS-MAT
 
 ```
-./subjects/HCP_d/HCD0627549_V1_MR/T1w_restore_brain.nii.gz,t1,m,15.25,[10,20,30,40,50,60,70,80]
-```
 
-The fields are separated by commas and represent:
+**2. Install requirements:**
+The following packages are required. You can install them via `requirements.txt`:
 
-* `{Path to MRI image}`
-* `{Original modality}` (e.g., t1)
-* `{Sex}` (m for male, f for female)
-* `{Original age}` (in years)
-* `{List of desired ages for generation}` (e.g., `[10,30,70]`)
-
-Example of data structure and subjects.txt file.
-
-![Image](https://github.com/user-attachments/assets/28741406-72e1-4075-978d-7ecd712cf24f)
-
-You are free to organize the folder structure as you wish.
-However, under the specified subject folder, there must be a subjects.txt file.
-This file must explicitly list the absolute paths of the MRI images in .nii.gz format.
-
-
-Once your data is prepared, run the toolbox by executing:
+```bash
+pip install -r requirements.txt
 
 ```
+
+> **Note:** Key dependencies include `brainspace`, `brainstat`, `freesurfer-surface`, `monai`, and `torch`. If execution fails, please refer to the full `requirements.txt` to ensure strict environment alignment.
+
+---
+
+## 💾 Model Checkpoints
+
+Download the pre-trained model checkpoints from the provided link and place them in the `model_checkpoint/` directory:
+
+🔗 **[Download Checkpoints (Dropbox)](https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0)**
+
+By default, the framework expects the weights to be located as follows:
+
+```text
+LS-MAT/
+└── model_checkpoint/
+    ├── autoencoder.pt
+    ├── diff_unet_ckpt.pt
+    └── controlnet_kits_finetune.pt
+
+```
+
+*(Optional)* If you wish to use a custom path, update the following fields in your `config.json`:
+
+```json
+{
+  "trained_vae_gan_path": "your_custom_path/autoencoder.pt",
+  "trained_diffusion_path": "your_custom_path/diff_unet_ckpt.pt",
+  "trained_controlnet_path": "your_custom_path/controlnet_kits_finetune.pt"
+}
+
+```
+
+---
+
+## 📂 Data Preparation
+
+Please prepare your **bias field-corrected and skull-stripped NIFTI** files.
+
+* MNI template-aligned brain images are highly recommended.
+* If your image is in **native space**, ensure you enable registration in `config.json` by setting `"registration": true`.
+
+### Defining `subjects.txt`
+
+Create a `subjects.txt` file inside the folder containing your MRI data. You can organize the folder structure as you wish, as long as `subjects.txt` contains the **absolute paths** to the `.nii.gz` files.
+
+Format each entry as a comma-separated list:
+`{Absolute Path}, {Modality}, {Sex}, {Original Age}, {Target Ages}`
+
+**Example:**
+
+```text
+/absolute/path/to/HCD0627549_V1_MR/T1w_restore_brain.nii.gz,t1,m,15.25,[10,20,30,40,50,60,70,80]
+
+```
+
+| Parameter | Description | Example |
+| --- | --- | --- |
+| `Path` | Absolute path to the MRI NIFTI file | `/path/to/img.nii.gz` |
+| `Modality` | Original image modality | `t1` |
+| `Sex` | Subject's sex | `m` (male) or `f` (female) |
+| `Original Age` | Subject's current age | `15.25` |
+| `Target Ages` | List of desired ages for synthesis | `[10, 30, 70]` |
+
+<details>
+<summary><b>Click to see Example Data Structure</b></summary>
+
+</details>
+
+---
+
+## 🚀 Usage
+
+Once your data and configurations are set up, start the generation process:
+
+```bash
 python main.py
-```
-
-The generated images are saved to the output path specified in the config.json file.
-By default, they maintain the same subfolder structure as the input subject folder.
-
-<img src="https://github.com/user-attachments/assets/f11e9ef3-31d9-4c58-8e5c-1920a7a2f56c" width="320" />
-
-For additional analyses, such as surface analysis and MPC analysis, update the corresponding parameters in the configuration file (`config.json`) and ensure your environment meets the necessary requirements.
-
- * "fastsurfer": false, (Default is false, because FastSurfer may be affected by your Python,OS environment.)
- * "MPC": false, (Since MPC analysis is performed using surfaces obtained from FastSurfer analysis, Default is also set to false.)
-
-
-## Documents
-
-https://brain-age-syn-docs.readthedocs.io/en/latest/
-
-## Dependency
-The following packages are required to run the toolbox. If execution fails despite meeting these requirements, please refer to the full `requirements.txt` file to ensure strict alignment of your environment:
 
 ```
-brainspace==0.1.16
-brainstat==0.4.2
-freesurfer-surface==2.0.0
-monai @ git+https://github.com/Project-MONAI/MONAI@cac21f6936a2e8d6e4e57e4e958f8e32aae1585e
-numpy==1.26.4
-pandas==2.2.3
-scikit-learn==1.5.2
-scipy==1.12.0
-torch==2.4.1
-torchsummary==1.5.1
-torchvision==0.19.1
-tornado==6.4.1
+
+Generated images will be saved to the output path specified in `config.json`. By default, the output maintains the exact same subfolder structure as your input data.
+
+<img src="https://github.com/user-attachments/assets/f11e9ef3-31d9-4c58-8e5c-1920a7a2f56c" width="320" alt="Output Example" />
+
+---
+
+## 🔬 Advanced Analysis
+
+LS-MAT supports further downstream tasks like surface and Microstructural Profile Covariance (MPC) analyses. You can toggle these features in `config.json`:
+
+```json
+{
+  "fastsurfer": false,
+  "MPC": false
+}
+
 ```
 
+* **FastSurfer**: Set to `true` to enable. *(Note: Default is `false` as FastSurfer performance relies on your specific OS/Python environment.)*
+* **MPC Analysis**: Set to `true` to enable. *(Note: This requires surfaces generated by FastSurfer, so it defaults to `false`.)*
+
+---
+
+## 📚 Documentation
+
+For complete API references and detailed tutorials, please visit our official documentation:
+**[LS-MAT ReadTheDocs](https://brain-age-syn-docs.readthedocs.io/en/latest/)**
+
+---
+
+## 📝 Citation
+
+If you find this code or our models useful in your research, please consider citing our work:
+
+```bibtex
+@article{lsmat2026,
+  title={LS-MAT: Lifespan structural magnetic resonance imaging Synthesis for Microstructural covariance profile Analysis Toolbox},
+  author={Kim, H., Kim, J., Kim, M., Park, H., & Park, B. Y. },
+  journal={NeuroImage},
+  year={2026}
+}
+
+```
