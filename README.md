@@ -22,7 +22,7 @@
 * **[2026-03-12]** 📄 **Paper Published!** Our research has been officially published in **NeuroImage**.  
     [[Journal Page]](https://www.sciencedirect.com/science/article/pii/S1053811926001576) | [[PDF]](#)
 
-* **[2025-06-27]** 🔥 **LS-MAT is released!** We have released the pre-trained model checkpoints.  
+* **[2025-06-13]** 🔥 **LS-MAT is released!** We have released the pre-trained model checkpoints.  
     💾 **[Download Checkpoints](https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0)** 
 
 
