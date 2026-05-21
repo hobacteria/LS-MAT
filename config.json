@@ -1,19 +1,21 @@
 {   
     "input_dir": "./subjects", 
     "subjects_info" : "/subjects_age.txt",
-    "registration": false,
-    "output_dir": "./output",
+    "registration": true,
+    "output_dir": "./output_full_test",
     "fastsurfer_dir_path": "./surfaces",
     "MPC_dir" : "./output_MPC",
     "model_dir": "./model",
-    "fastsurfer": false,
+    "fastsurfer": true,
     "MPC": false,
     "device": "cuda",
     "trained_vae_gan_path": "model_checkpoint/autoencoder.pt",
     "trained_diffusion_path": "model_checkpoint/diff_unet_ckpt.pt",
     "trained_controlnet_path": "model_checkpoint/controlnet_kits_finetune.pt",
-    "inference_step" : 300,
+    "inference_step" : 50,
     "n_threads" : 60,
-    "n_gpu_parallel": 8
-    
+    "n_gpu_parallel": 8,
+    "gpu_utilization": 0.7,
+    "fs_license_path": "/home/hkkim/freesurfer_license.txt",
+    "fastsurfer_local_dir": "/home/hkkim/fastsurfer_local"
 }

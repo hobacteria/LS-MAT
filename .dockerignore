@@ -1,0 +1,27 @@
+# Model weights — mount at /models instead
+model_checkpoint/
+
+# Data directories — mount at /data instead
+subjects/
+subjects_reg/
+output*/
+surfaces/
+.tmp/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+
+# Git
+.git/
+.gitignore
+
+# Logs and temp files
+*.log
+*.txt.bak
+
+# IDE
+.cursor/
+.vscode/

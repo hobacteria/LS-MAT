@@ -23,7 +23,7 @@
     [[Journal Page]](https://www.sciencedirect.com/science/article/pii/S1053811926001576) | [[PDF]](#)
 
 * **[2025-06-13]** 🔥 **LS-MAT is released!** We have released the pre-trained model checkpoints.  
-    💾 **[Download Checkpoints](https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0)** 
+    💾 **[Hugging Face](https://huggingface.co/Hovirus/LS-MAT)** | **[Dropbox mirror](https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0)** 
 
 
 
@@ -63,7 +63,11 @@ pip install -r requirements.txt
 
 ## 💾 Model Checkpoints
 
-Download the pre-trained model checkpoints from the provided link and place them in the `model_checkpoint/` directory:
+Pre-trained weights are hosted on Hugging Face:
+
+🔗 **[Hovirus/LS-MAT on Hugging Face](https://huggingface.co/Hovirus/LS-MAT)**
+
+If `model_checkpoint/` is **empty** or any of the three weight files below are missing, running `python main.py` will **automatically download** this checkpoint snapshot (requires `huggingface_hub`; included in `requirements.txt`). You can also fetch weights manually from Hugging Face or from the Dropbox mirror:
 
 🔗 **[Download Checkpoints (Dropbox)](https://www.dropbox.com/scl/fo/o4s68o3adwdsewrd7k72x/AHjnydJ31tU_x8-BnkAiURE?rlkey=xu1oyp0n463nh64xwr5uxxfzl&st=52hy6pwv&dl=0)**
 

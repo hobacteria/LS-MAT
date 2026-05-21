@@ -157,6 +157,50 @@ def transformation(image):
     return transform(image)
 
 
+def build_flat_samples(train_files):
+    """Expand per-subject entries (with a list of synth_ages) into individual (subject, synth_age) pairs."""
+    flat = []
+    for entry in train_files:
+        for age in entry["synth_age"]:
+            flat.append({
+                "image":        entry["image"],
+                "image_path":   entry["image_path"],
+                "modality":     entry["modality"],
+                "modality_str": entry["modality_str"],
+                "sex":          entry["sex"],
+                "age":          entry["age"],
+                "synth_age":    float(age),
+            })
+    return flat
+
+
+def flat_dataloader(flat_samples, batch_size, device, cache_rate=0.0, num_workers=2):
+    """DataLoader for a flat list of (subject, single_synth_age) dicts."""
+    sex_mapping = {"f": 0, "female": 0, "m": 1, "male": 1}
+    modality_mapping = {"t1": 0, "t2": 1}
+
+    def one_hot(value, mapping):
+        vec = torch.zeros(len(set(mapping.values())), dtype=torch.float)
+        vec[mapping[value]] = 1
+        return vec.to(device)
+
+    train_transforms = Compose([
+        monai.transforms.LoadImaged(keys=["image"]),
+        monai.transforms.EnsureChannelFirstd(keys=["image"]),
+        monai.transforms.Orientationd(keys=["image"], axcodes="RAS"),
+        monai.transforms.EnsureTyped(keys=["image"], dtype=torch.float32),
+        monai.transforms.ScaleIntensityRangePercentilesd(keys=["image"], lower=0.0, upper=99.5, b_min=0.0, b_max=1, clip=False),
+        monai.transforms.Resized(keys=["image"], spatial_size=(256, 256, 256), mode="trilinear"),
+        monai.transforms.Lambdad(keys=["sex"],      func=lambda x: one_hot(x, sex_mapping)),
+        monai.transforms.Lambdad(keys=["modality"], func=lambda x: one_hot(x, modality_mapping)),
+        monai.transforms.Lambdad(keys=["age"],      func=lambda x: torch.Tensor([float(x)]).to(device)),
+        monai.transforms.Lambdad(keys=["synth_age"],func=lambda x: torch.Tensor([float(x)]).to(device)),
+    ])
+
+    ds = monai.data.CacheDataset(data=flat_samples, transform=train_transforms, cache_rate=cache_rate, num_workers=num_workers)
+    return ThreadDataLoader(ds, num_workers=0, batch_size=batch_size, shuffle=False)
+
+
 def parse_train_files(file = 'subjects.txt'):
     """
     학습 데이터 파일을 파싱합니다.

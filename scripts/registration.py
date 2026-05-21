@@ -6,6 +6,7 @@ from scripts.utils import parse_train_files,dataloader
 from tqdm import tqdm
 import nibabel as nib
 import os
+import shutil
 import numpy as np
 class Registeration_imaged(MapTransform):
 
@@ -156,7 +157,7 @@ def registration(args):
     This function is for registration of input images.
     If input files are registered, set 0. If not, set 1
     """
-    if args.registration == 1:
+    if args.registration:
         # do registration
         print('do registration')
         
@@ -166,10 +167,8 @@ def registration(args):
     
     files = parse_train_files(file = args.input_dir + args.subjects_info)
     input_regi = args.input_dir + '_reg'
-    if os.path.exists(input_regi) == False:
-        os.makedirs(input_regi)
-    if os.path.exists('./.tmp') == False:
-        os.makedirs('./.tmp')
+    os.makedirs(input_regi, exist_ok=True)
+    os.makedirs('./.tmp', exist_ok=True)
         
     t1_regi_transform = Registeration_imaged(keys = 'image',templete='./template/MNI152_T1_0.8mm_brain.nii.gz')
     t2_regi_transform = Registeration_imaged(keys = 'image',templete='./template/MNI152_T2_0.8mm_brain.nii.gz')
@@ -177,26 +176,23 @@ def registration(args):
     with tqdm(files) as pbar:
         for image_info in pbar:
             image_path = image_info['image']
-            modality = image_info['modality']         
-            subject_id = image_path.replace(args.input_dir,'.').replace('.nii.gz','') # define filename and subfolder structure automatically
+            modality = image_info['modality']
+            subject_id = image_path.replace(args.input_dir, '.').replace('.nii.gz', '')
             image_info['subject_id'] = subject_id
             pbar.set_description(f"Processing {image_path}")
-            if modality == 't1':
-                image_reg = t1_regi_transform(image_info) ## process registration, image will save in tmp folder
-                image_reg_path = image_reg['image']
-                if not os.path.exists(os.path.dirname(f'{input_regi}/{subject_id}')):
-                    os.makedirs(os.path.dirname(f'{input_regi}/{subject_id}'))
-                os.system(f'cp {image_reg_path} {input_regi}/{subject_id}_reg.nii.gz') # copy registered image to input_regi folder
-                
-            elif modality == 't2':
-                image_reg = t2_regi_transform(image_info)
-                image_reg_path = image_reg['image']
-                if not os.path.exists(os.path.dirname(f'{input_regi}/{subject_id}')):
-                    os.makedirs(os.path.dirname(f'{input_regi}/{subject_id}'))
-                os.system(f'cp {image_reg_path} {input_regi}/{subject_id}_reg.nii.gz')
-            else:
+
+            dest_path = f'{input_regi}/{subject_id}_reg.nii.gz'
+            if os.path.exists(dest_path):
+                continue  # already registered
+
+            regi_transform = t1_regi_transform if modality == 't1' else t2_regi_transform if modality == 't2' else None
+            if regi_transform is None:
                 print(f'Unknown modality: {image_path}')
-                pass
+                continue
+            image_reg = regi_transform(image_info)
+            dest_dir = os.path.dirname(dest_path)
+            os.makedirs(dest_dir, exist_ok=True)
+            shutil.copy2(image_reg['image'], dest_path)
 
     with open(args.input_dir + f'_reg/{args.subjects_info}', 'w') as f:
         for file in files:

@@ -1,0 +1,21 @@
+{
+    "input_dir": "/data/subjects",
+    "subjects_info": "/subjects_age.txt",
+    "registration": false,
+    "output_dir": "/data/output",
+    "fastsurfer_dir_path": "/data/surfaces",
+    "MPC_dir": "/data/output_MPC",
+    "model_dir": "/models",
+    "fastsurfer": true,
+    "MPC": false,
+    "device": "cuda",
+    "trained_vae_gan_path": "/models/autoencoder.pt",
+    "trained_diffusion_path": "/models/diff_unet_ckpt.pt",
+    "trained_controlnet_path": "/models/controlnet_kits_finetune.pt",
+    "inference_step": 50,
+    "n_threads": 4,
+    "n_gpu_parallel": 1,
+    "gpu_utilization": 0.7,
+    "fs_license_path": "/fs_license/license.txt",
+    "fastsurfer_local_dir": "/tmp/lsmat_staging"
+}

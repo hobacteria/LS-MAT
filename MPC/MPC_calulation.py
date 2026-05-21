@@ -3,7 +3,7 @@ import pandas as pd
 
 
 
-def  MPC_calc(args):
+def MPC_calc(args):
 
     root_dir = args.fastsurfer_dir_path
     with open(args.fastsurfer_dir_path+'/subjects.txt','r') as f: 
@@ -42,13 +42,10 @@ def  MPC_calc(args):
     output_dir = args.output_dir
     
 
-    def excute_MPC_process(T1_path,output_dir,n_treads):
-        fs_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} fs'
-        myelin_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} myelin'
-        MPC_command = f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_treads} MPC'
-        os.system(fs_command)
-        os.system(myelin_command)
-        os.system(MPC_command)
-        
-    excute_MPC_process(T1_path,output_dir,args.n_threads)
+    def execute_MPC_process(T1_path, output_dir, n_threads):
+        os.system(f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_threads} fs')
+        os.system(f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_threads} myelin')
+        os.system(f'bash ./MPC/preprocessing.sh {T1_path} {output_dir} {n_threads} MPC')
+
+    execute_MPC_process(T1_path, output_dir, args.n_threads)
     
